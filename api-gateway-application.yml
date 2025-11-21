@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: api-gateway
+
+  # --- 1. GÜVENLİK (KEYCLOAK) ---
   security:
     oauth2:
       client:
@@ -18,21 +20,64 @@ spring:
             client-secret: 7qH8b8TS5cbkEYtXxjA58ZHMrebsy4LF
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: openid, profile
+            scope: openid, profile, email, roles
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8180/realms/ecommerce-realm/protocol/openid-connect/certs
+
+  # --- 2. GATEWAY ROUTING ---
   cloud:
     gateway:
+      # [SADELEŞTİRME 1]: TokenRelay'i buraya aldık. Artık tüm rotalar için geçerli.
       default-filters:
-        - TokenRelay # <--- SİHİRLİ KOD: Token'ı alıp User-Service'e iletir.  # <--- Login olmuş kullanıcının token'ını arkaya iletir
+        - TokenRelay
+      
       routes:
-        - id: user-service
-          uri: lb://user-service
-          predicates:
-            - Path=/api/users/**
         - id: product-service
           uri: lb://product-service
           predicates:
             - Path=/api/products/**
+          filters:
+            # TokenRelay'i buradan sildik (yukarıdan alıyor)
+            - name: CircuitBreaker
+              args:
+                name: productCircuitBreaker
+                fallbackUri: forward:/fallback/product
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userCircuitBreaker
+                fallbackUri: forward:/fallback/user
+
+# --- 3. EUREKA ---
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+# --- 4. RESILIENCE4J (SİGORTA) AYARLARI ---
+resilience4j:
+  circuitbreaker:
+    # [SADELEŞTİRME 2]: Kuralları tek bir yerde (default) tanımladık.
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+    
+    # Instance'lara sadece "default ayarı kullan" diyoruz.
+    instances:
+      productCircuitBreaker:
+        baseConfig: default
+      userCircuitBreaker:
+        baseConfig: default
