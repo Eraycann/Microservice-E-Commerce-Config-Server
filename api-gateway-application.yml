@@ -17,7 +17,7 @@ spring:
       host: localhost
       port: 6379
 
-# --- 2. GÜVENLİK ---
+  # --- 2. GÜVENLİK ---
   security:
     oauth2:
       # A. LOGIN İŞLEMİ İÇİN (BFF CLIENT)
@@ -35,8 +35,7 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, profile, email, roles
       
-      # B. TOKEN DOĞRULAMA İÇİN (RESOURCE SERVER - EKSİK OLAN KISIM)
-      # Bunu eklemezsen "ReactiveJwtDecoder" hatası alırsın.
+      # B. TOKEN DOĞRULAMA İÇİN (RESOURCE SERVER)
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:8180/realms/ecommerce-realm/protocol/openid-connect/certs
@@ -75,7 +74,7 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/users/**, /api/v1/users/** filters:
+            - Path=/api/users/**, /api/v1/users/**
           filters:
             - name: CircuitBreaker
               args:
@@ -152,5 +151,3 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-
-
