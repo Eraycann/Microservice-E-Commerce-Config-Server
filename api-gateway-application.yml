@@ -34,7 +34,7 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, profile, email, roles
-      
+
       # B. TOKEN DOĞRULAMA İÇİN (RESOURCE SERVER)
       resourceserver:
         jwt:
@@ -47,15 +47,7 @@ spring:
       default-filters:
         - TokenRelay
 
-      # --- CORS (React Bağlantısı) ---
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins:
-              - "http://localhost:5173" # React Vite
-            allowedMethods: "*"
-            allowedHeaders: "*"
-            allowCredentials: true # COOKIE GÖNDERİMİ İÇİN ŞART
+
 
       # --- ROTA TANIMLARI ---
       routes:
@@ -118,7 +110,7 @@ spring:
         - id: recommendation-service
           uri: lb://recommendation-service
           predicates:
-            - Path=/api/v1/recommendations/**, /api/recommendations/**
+            - Path=/api/recommendations/**
           filters:
             - name: CircuitBreaker
               args:
@@ -151,4 +143,3 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-
