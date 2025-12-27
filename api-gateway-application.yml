@@ -132,7 +132,7 @@ spring:
         - id: feedback-service
           uri: lb://feedback-service
           predicates:
-            - Path=/api/feedbacks/**
+            - Path=/api/v1/reviews/**, /api/reviews/**, /api/v1/questions/**, /api/questions/**, /api/v1/feedbacks/**, /api/feedbacks/**
           filters:
             - name: CircuitBreaker
               args:
@@ -143,4 +143,5 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
 
