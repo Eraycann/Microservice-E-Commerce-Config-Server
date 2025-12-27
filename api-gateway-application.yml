@@ -4,7 +4,7 @@ server:
 spring:
   application:
     name: api-gateway
-    
+
   # 👇👇👇 BURASI EKLENDİ: DOSYA YÜKLEME İZNİ (ÇOK ÖNEMLİ) 👇👇👇
   main:
     web-application-type: reactive # Gateway'in reaktif olduğunu garantiye alalım
@@ -135,20 +135,27 @@ spring:
               args:
                 name: notificationCircuitBreaker
                 fallbackUri: forward:/fallback/notification
-
-        # 8. FEEDBACK SERVICE
+        
+        # 8. FEEDBACK SERVICE (API İŞLEMLERİ)
         - id: feedback-service
           uri: lb://feedback-service
           predicates:
-            - Path=/api/v1/reviews/**, /api/v1/questions/**, /api/feedbacks/**, /feedback-service/uploads/**
+            - Path=/api/v1/reviews/**, /api/v1/questions/**, /api/v1/feedbacks/**
           filters:
             - name: CircuitBreaker
               args:
                 name: feedbackCircuitBreaker
                 fallbackUri: forward:/fallback/feedback
 
+        # 👇👇👇 BURASI EKLENECEK: RESİM YÜKLEME ROTASI 👇👇👇
+        # Frontend "/uploads/resim.jpg" isteği attığında buraya düşecek.
+        - id: feedback-service-uploads
+          uri: lb://feedback-service
+          predicates:
+            - Path=/uploads/**
+        # 👆👆👆 ------------------------------------------ 👆👆👆
+
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-
